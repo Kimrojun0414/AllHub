@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4×4 게임 & 스튜디오 허브</title>
+  <style>
+    :root {
+      --bg: #070b14;
+      --panel: rgba(15, 23, 42, 0.82);
+      --card: rgba(20, 31, 56, 0.78);
+      --border: rgba(148, 163, 184, 0.2);
+      --glow: rgba(56, 189, 248, 0.45);
+      --text: #f8fafc;
+      --sub: #94a3b8;
+      --cyan: #38bdf8;
+      --purple: #a855f7;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      background-image:
+        radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.14), transparent 36%),
+        radial-gradient(circle at 85% 18%, rgba(168, 85, 247, 0.14), transparent 38%),
+        radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.08), transparent 42%);
+      padding: 28px 18px 56px;
+    }
+
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 18px 22px;
+      backdrop-filter: blur(14px);
+      margin-bottom: 22px;
+    }
+
+    .title-group h1 {
+      font-size: clamp(1.35rem, 2.8vw, 1.85rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .title-group p {
+      font-size: 0.88rem;
+      color: var(--sub);
+      margin-top: 4px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .chip-btn {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .chip-btn:hover,
+    .chip-btn.active {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      background: rgba(56, 189, 248, 0.14);
+    }
+
+    .search-input {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      color: var(--text);
+      outline: none;
+      width: 170px;
+    }
+
+    .search-input:focus {
+      border-color: var(--cyan);
+    }
+
+    .grid-4x4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 10px;
+      min-height: 158px;
+      padding: 18px 12px;
+      border-radius: 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      text-decoration: none;
+      color: var(--text);
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tile:hover:not(.empty) {
+      transform: translateY(-4px);
+      border-color: var(--glow);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .tile:active:not(.empty) {
+      transform: scale(0.97);
+    }
+
+    .tile-num {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--sub);
+    }
+
+    .tile-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 0.66rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.14);
+      color: var(--cyan);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+    }
+
+    .icon-box {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-size: 1.8rem;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(168, 85, 247, 0.18));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .tile-title {
+      font-size: 0.94rem;
+      font-weight: 800;
+      line-height: 1.3;
+      word-break: keep-all;
+    }
+
+    .tile-sub {
+      font-size: 0.73rem;
+      color: var(--sub);
+    }
+
+    .tile.empty {
+      background: rgba(15, 23, 42, 0.42);
+      border-style: dashed;
+      border-color: rgba(148, 163, 184, 0.16);
+      cursor: default;
+      opacity: 0.68;
+    }
+
+    .tile.empty .icon-box {
+      background: rgba(30, 41, 59, 0.5);
+      font-size: 1.3rem;
+      color: var(--sub);
+    }
+
+    @media (max-width: 760px) {
+      .grid-4x4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .tile {
+        min-height: 138px;
+      }
+      .search-input {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top-bar">
+      <div class="title-group">
+        <h1>🎮 4×4 게임 & 스튜디오 허브</h1>
+        <p>아이콘을 누르면 연결된 페이지가 새 탭으로 바로 열립니다.</p>
+      </div>
+
+      <div class="controls">
+        <button class="chip-btn active" data-filter="ALL" onclick="setFilter('ALL', this)">전체 (12)</button>
+        <button class="chip-btn" data-filter="GAME" onclick="setFilter('GAME', this)">게임</button>
+        <button class="chip-btn" data-filter="TOOL" onclick="setFilter('TOOL', this)">제작·활동</button>
+        <input class="search-input" id="searchBox" type="search" placeholder="이름 검색..." oninput="renderGrid()" />
+      </div>
+    </header>
+
+    <main class="grid-4x4" id="hubGrid"></main>
+  </div>
+
+  <script>
+    const ITEMS = [
+      {
+        slot: 1,
+        title: "꾸며봐요 도토리 마을!",
+        sub: "도토리 마을 꾸미기",
+        icon: "🌰",
+        type: "GAME",
+        tag: "게임",
+        url: "https://kcyboy123-png.github.io/learning-games-extra/village-hanpan/village-next/"
+      },
+      {
+        slot: 2,
+        title: "미션클래스",
+        sub: "미션 & 활동 플랫폼",
+        icon: "🎯",
+        type: "TOOL",
+        tag: "활동",
+        url: "https://missionclass.com"
+      },
+      {
+        slot: 3,
+        title: "엔트리",
+        sub: "블록코딩 & 작품",
+        icon: "🐱",
+        type: "TOOL",
+        tag: "코딩",
+        url: "https://playentry.org"
+      },
+      {
+        slot: 4,
+        title: "캔바",
+        sub: "디자인 만들기",
+        icon: "🎨",
+        type: "TOOL",
+        tag: "디자인",
+        url: "https://www.canva.com/ko_kr/create/"
+      },
+      {
+        slot: 5,
+        title: "대한타이쿤",
+        sub: "승진 & 국가 시뮬레이터",
+        icon: "🏛️",
+        type: "GAME",
+        tag: "게임",
+        url: "https://kimrojun0414.github.io/KoreaSimuliater/"
+      },
+      {
+        slot: 6,
+        title: "미스터리 거래소",
+        sub: "주식 추론 심리전",
+        icon: "📈",
+        type: "GAME",
+        tag: "게임",
+        url: "https://kimrojun0414.github.io/Mysterious/"
+      },
+      {
+        slot: 7,
+        title: "한국야구",
+        sub: "프로야구 시뮬·액션",
+        icon: "⚾",
+        type: "GAME",
+        tag: "게임",
+        url: "https://kimrojun0414.github.io/baseball/"
+      },
+      {
+        slot: 8,
+        title: "방파제 포격대",
+        sub: "탱크 슈팅·전술",
+        icon: "💥",
+        type: "GAME",
+        tag: "게임",
+        url: "https://dew978.github.io/tank/"
+      },
+      {
+        slot: 9,
+        title: "과자저택 탈출",
+        sub: "미션 탈출 게임",
+        icon: "🍪",
+        type: "GAME",
+        tag: "게임",
+        url: "https://dew978.github.io/love-mission/"
+      },
+      {
+        slot: 10,
+        title: "호박저택 탈출",
+        sub: "할로윈 탈출 게임",
+        icon: "🎃",
+        type: "GAME",
+        tag: "게임",
+        url: "https://dew978.github.io/halloween/"
+      },
+      {
+        slot: 11,
+        title: "페들렛",
+        sub: "아이디어 보드",
+        icon: "📌",
+        type: "TOOL",
+        tag: "보드",
+        url: "https://ko.padlet.com"
+      },
+      {
+        slot: 12,
+        title: "얼불춤",
+        sub: "리듬 & 타이밍 액션",
+        icon: "🔥❄️",
+        type: "GAME",
+        tag: "게임",
+        url: "https://kimrojun0414.github.io/Icefire/"
+      }
+    ];
+
+    const TOTAL_SLOTS = 16;
+    let currentFilter = "ALL";
+
+    function setFilter(filter, btnEl) {
+      currentFilter = filter;
+      document.querySelectorAll(".chip-btn").forEach(b => b.classList.remove("active"));
+      if (btnEl) btnEl.classList.add("active");
+      renderGrid();
+    }
+
+    function openExternal(url) {
+      const win = window.open(url, "_blank", "noopener,noreferrer");
+      if (!win) {
+        window.location.href = url;
+      }
+    }
+
+    function renderGrid() {
+      const query = (document.getElementById("searchBox").value || "").trim().toLowerCase();
+      const grid = document.getElementById("hubGrid");
+      const html = [];
+
+      for (let i = 1; i <= TOTAL_SLOTS; i++) {
+        const item = ITEMS.find(x => x.slot === i);
+
+        if (!item) {
+          html.push(`
+            <div class="tile empty" aria-disabled="true">
+              <span class="tile-num">#${String(i).padStart(2, "0")}</span>
+              <div class="icon-box">＋</div>
+              <div class="tile-title">빈 슬롯</div>
+              <div class="tile-sub">추가 예정</div>
+            </div>
+          `);
+          continue;
+        }
+
+        const matchType = currentFilter === "ALL" || item.type === currentFilter;
+        const matchQuery = !query || item.title.toLowerCase().includes(query) || item.sub.toLowerCase().includes(query);
+
+        if (!matchType || !matchQuery) {
+          html.push(`
+            <div class="tile empty" style="opacity:0.25;">
+              <span class="tile-num">#${String(i).padStart(2, "0")}</span>
+              <div class="icon-box">${item.icon}</div>
+              <div class="tile-title">${item.title}</div>
+              <div class="tile-sub">필터 제외</div>
+            </div>
+          `);
+          continue;
+        }
+
+        html.push(`
+          <button class="tile" type="button" onclick="openExternal('${item.url}')" title="${item.title} 열기">
+            <span class="tile-num">#${String(i).padStart(2, "0")}</span>
+            <span class="tile-badge">${item.tag}</span>
+            <div class="icon-box">${item.icon}</div>
+            <div class="tile-title">${item.title}</div>
+            <div class="tile-sub">${item.sub}</div>
+          </button>
+        `);
+      }
+
+      grid.innerHTML = html.join("");
+    }
+
+    renderGrid();
+  </script>
+</body>
+</html>
